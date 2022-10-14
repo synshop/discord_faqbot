@@ -25,7 +25,8 @@ async def on_message(message):
     m = m.translate(str.maketrans('', '', string.punctuation))
     print(m)
 
-    if  m == "SHOP HOURS":
-        await message.channel.send(config.SHOP_HOURS)
+    for phrase in config.PHRASES:
+        if m == phrase:
+            await message.channel.send(config.SHOP_HOURS)
 
 client.run(token)
