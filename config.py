@@ -26,10 +26,10 @@ Current Shop Hours as of Oct 2022
 Monday:     7-10pm (1st and 3rd Mondays each month only)
 Tuesday:    7-10pm
 Wednesday:  7-10pm
-Thursday:   Closeed
+Thursday:   CLOSED
 Friday:     6-10pm
-Saturday:   Noon to 5pm
-Sunday:     Closed
+Saturday:   12-5pm
+Sunday:     CLOSED
 
 5967 Harrison Dr
 Las Vegas, NV, 89120
