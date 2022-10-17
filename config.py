@@ -1,4 +1,3 @@
-TOKEN = "<DISCORD OAUTH2 TOKEN GOES HERE"
 
 PHRASES = [
     "IS THE SHOP OPEN",
@@ -27,7 +26,7 @@ Current Shop Hours as of Oct 2022
 Monday:     7-10pm (1st and 3rd Mondays each month only)
 Tuesday:    7-10pm
 Wednesday:  7-10pm
-Thursday:   Closed
+Thursday:   Closeed
 Friday:     6-10pm
 Saturday:   Noon to 5pm
 Sunday:     Closed
@@ -40,3 +39,4 @@ The times listed are hours that vetted members have volunteered to hold the shop
 This listing will be updated as more vetted members step up to hold the shop open. If you are vetted and willing to volunteer, please let one of the board members know.
 ```
 """
+
