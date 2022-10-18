@@ -16,6 +16,10 @@ PHRASES = [
     "IS ANY ONE GOING TO BE AT THE SHOP TONIGHT",
     "IS ANYONE GOING TO THE SHOP TONIGHT",
     "IS ANY ONE GOING TO THE SHOP TONIGHT",
+    "IS ANYONE GOING TO THE SHOP TODAY",
+    "IS ANY ONE GOING TO THE SHOP TODAY",
+    "IS ANYONE GOING TO THE SHOP TOMORROW",
+    "IS ANY ONE GOING TO THE SHOP TOMORROW",
     "ANY PLANS FOR THE SHOP TO BE OPEN",
     "ANYONE GOING TONIGHT",
     "ANY ONE GOING TONIGHT"
@@ -28,7 +32,7 @@ Current Shop Hours as of Oct 2022
 Monday:     7-10pm (1st and 3rd Mondays each month only)
 Tuesday:    7-10pm
 Wednesday:  7-10pm
-Thursday:   CLOSED
+Thursday:   6-10pm
 Friday:     6-10pm
 Saturday:   12-5pm
 Sunday:     CLOSED
