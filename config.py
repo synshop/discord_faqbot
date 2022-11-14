@@ -27,7 +27,7 @@ PHRASES = [
 
 SHOP_HOURS = """
 ```
-Current Shop Hours as of Oct 2022
+Current Shop Hours as of Nov 2022
 ===
 Monday:     7-10pm (1st and 3rd Mondays each month only)
 Tuesday:    7-10pm
