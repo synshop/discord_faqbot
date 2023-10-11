@@ -24,7 +24,7 @@ def get_shop_hours():
         td = tr.find_all("td")
         hours_dict[td[0].text] = td[1].text
 
-    markdown_string = f'```\nCurrent Shop Hours\n=====\n'
+    markdown_string = f'```\n*Current Shop Hours (fetched from https://synshop.org/hours)*\n=====\n'
 
     for k,v in hours_dict.items():
         spaces = ""
@@ -57,3 +57,4 @@ async def on_message(message):
             await message.channel.send(get_shop_hours())
 
 client.run(discord_token.TOKEN)
+
