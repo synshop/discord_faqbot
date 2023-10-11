@@ -56,6 +56,4 @@ async def on_message(message):
         if m == phrase:
             await message.channel.send(get_shop_hours())
 
-# client.run(discord_token.TOKEN)
-
-print(get_shop_hours())
+client.run(discord_token.TOKEN)
