@@ -27,7 +27,7 @@ def get_shop_hours():
     markdown_string = "```\nCurrent Shop Hours\n=====\n"
 
     for k,v in hours_dict.items():
-        markdown_string = markdown_string + k + ":\t" + v + "\n"
+        markdown_string = markdown_string + k + ":\U00000009\U00000009" + v + "\n"
 
     markdown_string = markdown_string + "\n5967 Harrison Dr\nLas Vegas, NV, 89120\n"
     markdown_string = markdown_string + "```"
