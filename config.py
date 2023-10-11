@@ -25,24 +25,4 @@ PHRASES = [
     "ANY ONE GOING TONIGHT"
 ]
 
-SHOP_HOURS = """
-```
-Current Shop Hours as of Jan 2023
-===
-Monday:     7-10pm
-Tuesday:    7-10pm
-Wednesday:  7-10pm
-Thursday:   6-10pm
-Friday:     6-10pm
-Saturday:   12-5pm
-Sunday:     CLOSED
-
-5967 Harrison Dr
-Las Vegas, NV, 89120
-
-The times listed are hours that vetted members have volunteered to hold the shop open for non-vetted members.  We are still closed to the public pending the finalization of our business permit, although people can contact us to schedule tours ahead of time as needed.
-
-This listing will be updated as more vetted members step up to hold the shop open. If you are vetted and willing to volunteer, please let one of the board members know.
-```
-"""
-
+SHOP_HOURS_URL="https://synshop.org/hours/index.html"
