@@ -24,13 +24,17 @@ def get_shop_hours():
         td = tr.find_all("td")
         hours_dict[td[0].text] = td[1].text
 
-    markdown_string = """```\nCurrent Shop Hours\n=====\n"""
+    markdown_string = f'```\nCurrent Shop Hours\n=====\n'
 
     for k,v in hours_dict.items():
-        markdown_string = markdown_string + k + """:\t\t""" + v + """\n"""
+        spaces = ""
+        s = 11 - (len(k) + 1)
+        for x in range(s):
+            spaces = spaces + " "
 
-    markdown_string = markdown_string + """\n5967 Harrison Dr\nLas Vegas, NV, 89120\n"""
-    markdown_string = markdown_string + """```"""
+        markdown_string = markdown_string + f'{k}:{spaces}{v}\n'
+
+    markdown_string = markdown_string + f'\n5967 Harrison Dr\nLas Vegas, NV, 89120\n```'
 
     return(markdown_string)
 
@@ -52,4 +56,6 @@ async def on_message(message):
         if m == phrase:
             await message.channel.send(get_shop_hours())
 
-client.run(discord_token.TOKEN)
+# client.run(discord_token.TOKEN)
+
+print(get_shop_hours())
