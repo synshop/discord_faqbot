@@ -24,7 +24,7 @@ def get_shop_hours():
         td = tr.find_all("td")
         hours_dict[td[0].text] = td[1].text
 
-    markdown_string = f'```\n*Current Shop Hours (fetched from https://synshop.org/hours)*\n=====\n'
+    markdown_string = f'```asciidoc\n#Current Shop Hours (fetched from https://synshop.org/hours)#\n=====\n'
 
     for k,v in hours_dict.items():
         spaces = ""
