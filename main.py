@@ -1,9 +1,6 @@
 import discord
-from discord.ext import commands
-import requests
+import requests, string
 from bs4 import BeautifulSoup
-
-import random, string
 
 import config, discord_token
 
@@ -34,7 +31,7 @@ def get_shop_hours():
 
         markdown_string = markdown_string + f'{k}:{spaces}{v}\n'
 
-    markdown_string = markdown_string + f'\n5967 Harrison Dr\nLas Vegas, NV, 89120\n```'
+    markdown_string = markdown_string + f'\n{config.SHOP_ADDRESS}\n```'
 
     return(markdown_string)
 
