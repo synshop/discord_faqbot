@@ -31,7 +31,8 @@ def get_shop_hours():
 
         markdown_string = markdown_string + f'{k}:{spaces}{v}\n'
 
-    markdown_string = markdown_string + f'\n{config.SHOP_ADDRESS}\n```'
+    markdown_string = markdown_string + f'\n{config.SHOP_ADDRESS}\n'
+    markdown_string = markdown_string + f'\n{config.MEMBERSHIP_NOTICE}\n```'
 
     return(markdown_string)
 
@@ -47,10 +48,11 @@ async def on_message(message):
     
     m = message.content.upper()
     m = m.translate(str.maketrans('', '', string.punctuation))
-    print(m)
 
     for phrase in config.PHRASES:
-        if m == phrase:
+        if phrase in m:
+            print(f'matched on: {phrase}')
             await message.channel.send(get_shop_hours())
+            break
 
 client.run(discord_token.TOKEN)
