@@ -1,0 +1,21 @@
+#!/sbin/openrc-run
+
+# copy this to /etc/init.d/discord-bot
+# and make it executable: chmod ugo+x /etc/init.d/discord-bot
+
+# taken from :
+#     https://wiki.gentoo.org/wiki/OpenRC/User_services
+#     https://stackoverflow.com/a/78629398
+#     https://wiki.alpinelinux.org/wiki/Writing_Init_Scripts
+
+pidfile="/run/${RC_SVCNAME}.pid"
+name=$RC_SVCNAME
+
+command_args="-p ${pidfile}"
+command_background="yes"
+command_user="bot"
+command="/home/bot/discord_faqbot/venv/bin/python /home/bot/discord_faqbot/main.py"
+
+depend() {
+        need net
+}
