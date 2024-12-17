@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 discord_token.py
+printer_config.py
