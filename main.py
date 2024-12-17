@@ -2,13 +2,45 @@ import discord
 import requests, string
 from bs4 import BeautifulSoup
 
+import paho.mqtt.subscribe as subscribe
+
+import json, ssl
 import config, discord_token
+
+from printer_config import PRINTERS
 
 intents = discord.Intents.default()
 intents.message_content = True
 intents.messages = True
 
 client = discord.Client(intents=intents)
+
+def get_printer_status():
+    
+    output_string = """\n"""
+
+    for p in PRINTERS:
+        printer = PRINTERS[p]
+
+        auth = {"username":printer["username"],"password":printer["access_code"]}
+        tls = ssl._create_unverified_context()
+
+        msg = subscribe.simple(topics=printer["topic_name"],hostname=printer["ip"],port=printer["port"],auth=auth,tls=tls)
+        x = json.loads(msg.payload)
+
+        printer_name = printer["name"]
+        job_name = x["print"]["subtask_name"]
+        printer_state = x["print"]["gcode_state"]
+        min_remain = x["print"]["mc_remaining_time"]
+
+        if printer_state == "RUNNING":
+            output_string = output_string + \
+                """```Printer: {0}\nPrinter State: Active\nJob Name: {1}\nMinutes Remaining: {2}\n\n```""".format(printer_name,job_name,min_remain)
+        else:
+            output_string = output_string + \
+                """```Printer: {0}\nPrinter State: Idle\n\n```""".format(printer_name)
+
+    return output_string
 
 def get_shop_hours():
     r = requests.get(config.SHOP_HOURS_URL)
@@ -48,6 +80,9 @@ async def on_message(message):
     
     m = message.content.upper()
     m = m.translate(str.maketrans('', '', string.punctuation))
+
+    if m == "GETPRINTERSTATUS":
+        await message.channel.send(get_printer_status())
 
     for phrase in config.PHRASES:
         if phrase in m:
