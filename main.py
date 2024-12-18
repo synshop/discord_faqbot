@@ -28,17 +28,17 @@ def get_printer_status():
         msg = subscribe.simple(topics=printer["topic_name"],hostname=printer["ip"],port=printer["port"],auth=auth,tls=tls)
         x = json.loads(msg.payload)
 
-        printer_name = printer["name"]
+        printer_name = printer["name"] + " (" + p + ")"
         job_name = x["print"]["subtask_name"]
         printer_state = x["print"]["gcode_state"]
         min_remain = x["print"]["mc_remaining_time"]
 
         if printer_state == "RUNNING":
             output_string = output_string + \
-                """```Printer: {0}\nPrinter State: Active\nJob Name: {1}\nMinutes Remaining: {2}\n\n```""".format(printer_name,job_name,min_remain)
+                """```Printer: {0}\nPrinter State: Active\nJob Name: {1}\nMinutes Remaining: {2}```\n\n""".format(printer_name,job_name,min_remain)
         else:
             output_string = output_string + \
-                """```Printer: {0}\nPrinter State: Idle\n\n```""".format(printer_name)
+                """```Printer: {0}\nPrinter State: Idle```\n\n""".format(printer_name)
 
     return output_string
 
