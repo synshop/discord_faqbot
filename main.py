@@ -35,10 +35,10 @@ def get_printer_status():
 
         if printer_state == "RUNNING":
             output_string = output_string + \
-                """```Printer: {0}\nPrinter State: Active\nJob Name: {1}\nMinutes Remaining: {2}```\n\n""".format(printer_name,job_name,min_remain)
+                """```Printer: {0}\nPrinter State: Active\nJob Name: {1}\nMinutes Remaining: {2}```""".format(printer_name,job_name,min_remain)
         else:
             output_string = output_string + \
-                """```Printer: {0}\nPrinter State: Idle```\n\n""".format(printer_name)
+                """```Printer: {0}\nPrinter State: Idle```""".format(printer_name)
 
     return output_string
 
