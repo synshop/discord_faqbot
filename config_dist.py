@@ -35,3 +35,5 @@ MEMBERSHIP_NOTICE = """You'll need to have a membership and sign a waiver before
 \nPlease see https://synshop.org/membership for more information\n"""
 
 PRINTER_STATUS = "GETPRINTERSTATUS"
+
+PRINTER_CHANNEL = "3d-printing-status"
