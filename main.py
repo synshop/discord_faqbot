@@ -71,7 +71,8 @@ def get_shop_hours():
 
 @client.event
 async def on_ready():
-    print(f'We have logged in as {client.user}')
+    print(f'We have logged in as {client.user}.')
+    print(f'Printer status keyword is {config.PRINTER_STATUS} and there are {len(config.PHRASES)} shop hour phrases.')
 
 @client.event
 async def on_message(message):
@@ -81,7 +82,7 @@ async def on_message(message):
     m = message.content.upper()
     m = m.translate(str.maketrans('', '', string.punctuation))
 
-    if m == "GETPRINTERSTATUS":
+    if m == config.PRINTER_STATUS:
         await message.channel.send(get_printer_status())
 
     for phrase in config.PHRASES:
