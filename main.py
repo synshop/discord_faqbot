@@ -17,7 +17,7 @@ client = discord.Client(intents=intents)
 
 def get_printer_status():
     
-    output_string = ""
+    status = ""
 
     for p in PRINTERS:
         printer = PRINTERS[p]
@@ -26,21 +26,19 @@ def get_printer_status():
         tls = ssl._create_unverified_context()
 
         msg = subscribe.simple(topics=printer["topic_name"],hostname=printer["ip"],port=printer["port"],auth=auth,tls=tls)
-        x = json.loads(msg.payload)
+        printer_object = json.loads(msg.payload)
 
-        printer_name = printer["name"]
-        job_name = x["print"]["subtask_name"]
-        printer_state = x["print"]["gcode_state"]
-        min_remain = x["print"]["mc_remaining_time"]
+        name = "**" + printer["name"] + "**"
+        job = printer_object["print"]["subtask_name"]
+        state = printer_object["print"]["gcode_state"]
+        mins = printer_object["print"]["mc_remaining_time"]
 
-        if printer_state == "RUNNING":
-            output_string = output_string + \
-                """**{0}**: {1} ({2} Min Remain)\n""".format(printer_name,job_name,min_remain)
+        if state == "RUNNING":
+            status += """{0}: {1} ({2} Min Remain)\n""".format(name, job, mins)
         else:
-            output_string = output_string + \
-                """**{0}**: Idle\n""".format(printer_name)
+            status += """{0}: Idle\n""".format(name)
 
-    return output_string
+    return status
 
 def get_shop_hours():
     r = requests.get(config.SHOP_HOURS_URL)
