@@ -131,3 +131,4 @@ dmypy.json
 discord_token.py
 printer_config.py
 .idea
+config.py

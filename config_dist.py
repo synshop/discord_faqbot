@@ -33,3 +33,5 @@ SHOP_ADDRESS = "5967 Harrison Dr\nSuite 1\nLas Vegas, NV, 89120"
 
 MEMBERSHIP_NOTICE = """You'll need to have a membership and sign a waiver before \nusing any of the tools at SYN Shop.
 \nPlease see https://synshop.org/membership for more information\n"""
+
+PRINTER_STATUS = "GETPRINTERSTATUS"
