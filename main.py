@@ -17,7 +17,7 @@ client = discord.Client(intents=intents)
 
 def get_printer_status():
     
-    output_string = """\n"""
+    status = ""
 
     for p in PRINTERS:
         printer = PRINTERS[p]
@@ -26,21 +26,19 @@ def get_printer_status():
         tls = ssl._create_unverified_context()
 
         msg = subscribe.simple(topics=printer["topic_name"],hostname=printer["ip"],port=printer["port"],auth=auth,tls=tls)
-        x = json.loads(msg.payload)
+        printer_object = json.loads(msg.payload)
 
-        printer_name = printer["name"] + " (" + p + ")"
-        job_name = x["print"]["subtask_name"]
-        printer_state = x["print"]["gcode_state"]
-        min_remain = x["print"]["mc_remaining_time"]
-
-        if printer_state == "RUNNING":
-            output_string = output_string + \
-                """```Printer: {0}\nPrinter State: Active\nJob Name: {1}\nMinutes Remaining: {2}```""".format(printer_name,job_name,min_remain)
+        name = "**" + printer["name"] + "**"
+        job = printer_object["print"]["subtask_name"]
+        state = printer_object["print"]["gcode_state"]
+        mins = printer_object["print"]["mc_remaining_time"]
+        
+        if state == "RUNNING":
+            status += """{0}: `{1}` ({2} Min Remain)\n""".format(name, job, mins)
         else:
-            output_string = output_string + \
-                """```Printer: {0}\nPrinter State: Idle```""".format(printer_name)
+            status += """{0}: Idle\n""".format(name)
 
-    return output_string
+    return status
 
 def get_shop_hours():
     r = requests.get(config.SHOP_HOURS_URL)
@@ -82,7 +80,7 @@ async def on_message(message):
     m = message.content.upper()
     m = m.translate(str.maketrans('', '', string.punctuation))
 
-    if m == config.PRINTER_STATUS:
+    if message.channel.name == config.PRINTER_CHANNEL and m == config.PRINTER_STATUS:
         await message.channel.send(get_printer_status())
 
     for phrase in config.PHRASES:
