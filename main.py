@@ -17,8 +17,9 @@ client = discord.Client(intents=intents)
 
 def get_printer_status():
     
-    status = ""
-
+    # thanks https://plainenglish.io/blog/send-an-embed-with-a-discord-bot-in-python
+    embedInner = discord.Embed(title="🖨 Printer Status 🖨",
+                               color=0xFF5733)
     for p in PRINTERS:
         printer = PRINTERS[p]
 
@@ -28,17 +29,19 @@ def get_printer_status():
         msg = subscribe.simple(topics=printer["topic_name"],hostname=printer["ip"],port=printer["port"],auth=auth,tls=tls)
         printer_object = json.loads(msg.payload)
 
-        name = "**" + printer["name"] + "**"
+        name = printer["name"]
         job = printer_object["print"]["subtask_name"]
         state = printer_object["print"]["gcode_state"]
         mins = printer_object["print"]["mc_remaining_time"]
-        
-        if state == "RUNNING":
-            status += """{0}: `{1}` ({2} Min Remain)\n""".format(name, job, mins)
-        else:
-            status += """{0}: Idle\n""".format(name)
 
-    return status
+        if state == "RUNNING":
+            value = """`{1}`\n{2} Min Remain""".format(name, job, mins)
+        else:
+            value = "Idle"
+
+        embedInner.add_field(name=name, value=value, inline=False)
+
+    return embedInner
 
 def get_shop_hours():
     r = requests.get(config.SHOP_HOURS_URL)
@@ -81,7 +84,7 @@ async def on_message(message):
     m = m.translate(str.maketrans('', '', string.punctuation))
 
     if message.channel.name == config.PRINTER_CHANNEL and m == config.PRINTER_STATUS:
-        await message.channel.send(get_printer_status())
+        await message.channel.send(embed=get_printer_status())
 
     for phrase in config.PHRASES:
         if phrase in m:
