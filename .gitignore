@@ -132,3 +132,4 @@ discord_token.py
 printer_config.py
 .idea
 config.py
+printers.sqlite
