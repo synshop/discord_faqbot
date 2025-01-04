@@ -33,9 +33,10 @@ def get_printer_status():
         job = printer_object["print"]["subtask_name"]
         state = printer_object["print"]["gcode_state"]
         mins = printer_object["print"]["mc_remaining_time"]
+        task_id = printer_object["print"]["task_id"]
 
         if state == "RUNNING":
-            value = """`{1}`\n{2} Min Remain""".format(name, job, mins)
+            value = """`{0}`\n{1} Min Remain (ID {2})""".format(job, mins, task_id)
         else:
             value = "Idle"
 
