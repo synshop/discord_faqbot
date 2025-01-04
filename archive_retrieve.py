@@ -1,14 +1,13 @@
 import paho.mqtt.subscribe as subscribe
-import json, ssl, config, requests, sqlite3, pytz, av, time, PIL
-from datetime import datetime, timezone
+import json, ssl, config, requests, sqlite3, pytz, av, PIL
 from bs4 import BeautifulSoup
 from printer_config import PRINTERS
 
 db_file = "printers.sqlite"
 printer_table = "print_status"
 
-def get_database_handle():
 
+def get_database_handle():
     create_table_statement = """CREATE TABLE IF NOT EXISTS print_status (
         id INTEGER PRIMARY KEY,
         date DATETIME NOT NULL,  
@@ -35,6 +34,7 @@ def get_database_handle():
 
     return database
 
+
 # Thanks https://github.com/Cacsjep/pyrtsputils/blob/main/snapshot_generator.py
 def save_image(ip, password):
     url = "rtsps://bblp:" + password + "@" + ip + ":322/streaming/live/1"
@@ -47,24 +47,25 @@ def save_image(ip, password):
 
 
 def save_printer_status(status, database):
-    time_zone = pytz.timezone('US/Pacific')
-    datetime = datetime.now(time_zone)
     sql = '''
         INSERT INTO 
         print_status(date, printer, printer_id, state, job, mins, task_id)
         VALUES
-        (?,?,?,?,?,?,?)
+        (CURRENT_TIMESTAMP, ?,?,?,?,?,?)
     '''
     row = (
-        datetime, status["name"], status["printer_id"], status["state"],
+        status["name"], status["printer_id"], status["state"],
         status["job"], status["mins"], status["task_id"]
     )
-    cursor = database.cursor()
-    # todo - fix this error:
-    #  archive_retrieve.py:63: DeprecationWarning: The default datetime adapter is deprecated as of Python 3.12; see the sqlite3 documentation for suggested replacement recipes
-    cursor.execute(sql, row)
-    database.commit()
-    return cursor.lastrowid
+    try:
+        cursor = database.cursor()
+        cursor.execute(sql, row)
+        database.commit()
+        result = True
+    except sqlite3.OperationalError as e:
+        print("Failed to save printer status", db_file, ". Error is:", e)
+        result = False
+    return result
 
 
 def get_printer_status(printer, printer_id):
@@ -98,11 +99,13 @@ def loop_over_printers():
 
     for printer_id in PRINTERS:
         printer = PRINTERS[printer_id]
+        print("Looping " + printer["name"] + " (" + printer_id + ")")
         status = get_printer_status(printer, printer_id)
         save_printer_status(status, database)
         save_image(printer["ip"], printer["access_code"])
 
     database.close()
+    print("Loop complete")
 
 
 def get_shop_hours():
