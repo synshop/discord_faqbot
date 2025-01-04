@@ -63,11 +63,7 @@ def save_printer_status(status, database):
     # todo - fix this error:
     #  archive_retrieve.py:63: DeprecationWarning: The default datetime adapter is deprecated as of Python 3.12; see the sqlite3 documentation for suggested replacement recipes
     cursor.execute(sql, row)
-
-    # commit the changes
     database.commit()
-
-    # get the id of the last inserted row
     return cursor.lastrowid
 
 
