@@ -39,42 +39,29 @@ def get_database_handle():
 def save_image(ip, password):
     url = "rtsps://bblp:" + password + "@" + ip + ":322/streaming/live/1"
     video = av.open(url, 'r')
-    # Iter over Package to get an frame
     for packet in video.demux():
-        # When frame is decoded
         for frame in packet.decode():
-            # Current datetime
-            ts = time.strftime("%Y%m%d-%H%M%S")
-            # Log file loctaion of file
-            print(f'Save Frame {ip}.jpg')
-            # Save Frame into JPEG
-            frame.to_image().save(f'{ip}.jpg')
-            # Close Connection to RTSP Source
+            frame.to_image().save(f'/tmp/{ip}.jpg')
             video.close()
-            print('Closing Connection')
-            # Return because we just need one frame
             return
 
 
-def save_printer_status(status_obj, database):
+def save_printer_status(status, database):
     time_zone = pytz.timezone('US/Pacific')
-    current_date_time = datetime.now(time_zone)
-    sql = '''INSERT INTO 
-                print_status(date, printer, printer_id, state, job, mins, task_id)
-             VALUES
-                (?,?,?,?,?,?,?)'''
-    print(status_obj)
+    datetime = datetime.now(time_zone)
+    sql = '''
+        INSERT INTO 
+        print_status(date, printer, printer_id, state, job, mins, task_id)
+        VALUES
+        (?,?,?,?,?,?,?)
+    '''
     row = (
-        current_date_time,
-        status_obj[0],
-        status_obj[1],
-        status_obj[2],
-        status_obj[3],
-        status_obj[4],
-        status_obj[5]
+        datetime, status["name"], status["printer_id"], status["state"],
+        status["job"], status["mins"], status["task_id"]
     )
     cursor = database.cursor()
-    print(row)
+    # todo - fix this error:
+    #  archive_retrieve.py:63: DeprecationWarning: The default datetime adapter is deprecated as of Python 3.12; see the sqlite3 documentation for suggested replacement recipes
     cursor.execute(sql, row)
 
     # commit the changes
@@ -87,20 +74,27 @@ def save_printer_status(status_obj, database):
 def get_printer_status(printer, printer_id):
     auth = {"username": printer["username"], "password": printer["access_code"]}
     tls = ssl._create_unverified_context()
-
+    status = {}
     try:
-        msg = subscribe.simple(topics=printer["topic_name"], hostname=printer["ip"], port=printer["port"], auth=auth, tls=tls)
+        msg = subscribe.simple(
+            topics=printer["topic_name"],
+            hostname=printer["ip"],
+            port=printer["port"],
+            auth=auth,
+            tls=tls
+        )
         printer_object = json.loads(msg.payload)
 
-        name = printer["name"]
-        printer_id = printer_id
-        state = printer_object["print"]["gcode_state"]
-        job = printer_object["print"]["subtask_name"]
-        mins = printer_object["print"]["mc_remaining_time"]
-        task_id = printer_object["print"]["task_id"]
-        return name, printer_id, state, job, mins, task_id
+        status["name"] = printer["name"]
+        status["printer_id"] = printer_id
+        status["state"] = printer_object["print"]["gcode_state"]
+        status["job"] = printer_object["print"]["subtask_name"]
+        status["mins"] = printer_object["print"]["mc_remaining_time"]
+        status["task_id"] = printer_object["print"]["task_id"]
     except Exception as e:
-        print(f'failed to get printer status for {printer["name"]} ({printer["ip"]}:{printer["port"]})', e)
+        print(f'Failed getting status for {printer["name"]} ({printer["ip"]}:{printer["port"]})', e)
+
+    return status
 
 
 def loop_over_printers():
@@ -108,8 +102,8 @@ def loop_over_printers():
 
     for printer_id in PRINTERS:
         printer = PRINTERS[printer_id]
-        status_obj = get_printer_status(printer, printer_id)
-        save_printer_status(status_obj, database)
+        status = get_printer_status(printer, printer_id)
+        save_printer_status(status, database)
         save_image(printer["ip"], printer["access_code"])
 
     database.close()
