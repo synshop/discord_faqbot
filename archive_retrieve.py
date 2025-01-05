@@ -29,6 +29,7 @@ def get_database_handle():
         print("Failed to open database", db_file, ". Error is:", e)
         exit(1)
 
+    database.row_factory = sqlite3.Row
     return database
 
 
@@ -56,9 +57,9 @@ def get_by_job_hash(job_hash, database):
         SELECT      
             job_hash, date, printer, printer_id, state, job, mins, task_id
         FROM print_status 
-        WHERE id = ?
+        WHERE job_hash = ?
     '''
-    search = (job_hash,)
+    search = (job_hash, )
     cursor = database.cursor()
     cursor.execute(search_sql, search)
     found = cursor.fetchone()

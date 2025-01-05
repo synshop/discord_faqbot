@@ -6,10 +6,21 @@ database = ar.get_database_handle()
 
 for printer_id in PRINTERS:
     printer = PRINTERS[printer_id]
-    print("Looping " + printer["name"] + " (" + printer_id + " " + printer["ip"] + ")")
-    status = ar.get_status_from_mqtt(printer, printer_id)
-    ar.save_printer_status(status, database)
-    ar.save_image(printer["ip"], printer["access_code"])
+    printer_str = printer["name"] + " (" + printer_id + " " + printer["ip"] + ")"
+
+    current_status = ar.get_status_from_mqtt(printer, printer_id)
+    job_hash = ar.get_job_hash(current_status)
+    prior_status = ar.get_by_job_hash(job_hash, database)
+    c_mins = int(current_status["mins"])
+    p_mins = int(prior_status["mins"])
+    if (prior_status is None or
+            prior_status["state"] != current_status["state"] or
+            c_mins != p_mins):
+        ar.save_printer_status(current_status, database)
+        ar.save_image(printer["ip"], printer["access_code"])
+        print(printer_str + " state change, wrote to DB")
+    else:
+        print(printer_str + " state unchanged, no DB updates")
 
 database.close()
 print("Loop complete")
