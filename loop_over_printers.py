@@ -9,7 +9,7 @@ for printer_id in PRINTERS:
     print("Looping " + printer["name"] + " (" + printer_id + " " + printer["ip"] + ")")
     status = ar.get_status_from_mqtt(printer, printer_id)
     ar.save_printer_status(status, database)
-    ar. save_image(printer["ip"], printer["access_code"])
+    ar.save_image(printer["ip"], printer["access_code"])
 
 database.close()
 print("Loop complete")
