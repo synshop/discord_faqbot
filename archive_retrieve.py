@@ -6,7 +6,7 @@ printer_table = "print_status"
 
 def get_database_handle():
     create_table_statement = """CREATE TABLE IF NOT EXISTS print_status (
-        id text PRIMARY KEY,
+        job_hash text PRIMARY KEY,
         date DATETIME NOT NULL,  
         printer text NOT NULL, 
         printer_id text NOT NULL, 
@@ -43,7 +43,7 @@ def save_image(ip, password):
             return
 
 
-def get_id(status):
+def get_job_hash(status):
     return hashlib.md5(
         status["name"].encode() +
         status["job"].encode() +
@@ -51,14 +51,14 @@ def get_id(status):
     ).hexdigest()
 
 
-def get_by_id(id, database):
+def get_by_job_hash(job_hash, database):
     search_sql = '''
         SELECT      
-            id, date, printer, printer_id, state, job, mins, task_id
+            job_hash, date, printer, printer_id, state, job, mins, task_id
         FROM print_status 
         WHERE id = ?
     '''
-    search = (id,)
+    search = (job_hash,)
     cursor = database.cursor()
     cursor.execute(search_sql, search)
     found = cursor.fetchone()
@@ -68,15 +68,15 @@ def get_by_id(id, database):
 def save_printer_status(status, database):
     save_sql = '''
         INSERT INTO 
-        print_status(id, date, printer, printer_id, state, job, mins, task_id)
+        print_status(job_hash, date, printer, printer_id, state, job, mins, task_id)
         VALUES
         (?, CURRENT_TIMESTAMP, ?,?,?,?,?,?)        
-        ON CONFLICT(id) 
+        ON CONFLICT(job_hash) 
         DO UPDATE SET 
         date = excluded.date, state = excluded.state, mins = excluded.mins;
     '''
     row = (
-        get_id(status), status["name"], status["printer_id"], status["state"],
+        get_job_hash(status), status["name"], status["printer_id"], status["state"],
         status["job"], status["mins"], status["task_id"]
     )
     try:
