@@ -1,6 +1,8 @@
 import paho.mqtt.subscribe as subscribe
-import json, ssl, config, requests, sqlite3, pytz, av, PIL
+import json, ssl, config, requests, sqlite3, pytz, av, PIL, hashlib
 from bs4 import BeautifulSoup
+from pty import slave_open
+
 from printer_config import PRINTERS
 
 db_file = "printers.sqlite"
@@ -9,7 +11,7 @@ printer_table = "print_status"
 
 def get_database_handle():
     create_table_statement = """CREATE TABLE IF NOT EXISTS print_status (
-        id INTEGER PRIMARY KEY,
+        id text PRIMARY KEY,
         date DATETIME NOT NULL,  
         printer text NOT NULL, 
         printer_id text NOT NULL, 
@@ -45,21 +47,44 @@ def save_image(ip, password):
             video.close()
             return
 
+def get_id(status):
+    return hashlib.md5(
+        status["name"].encode() +
+        status["job"].encode() +
+        status["printer_id"].encode()
+    ).hexdigest()
+
+
+def get_by_id(id, database):
+    search_sql = '''
+        SELECT      
+            id, date, printer, printer_id, state, job, mins, task_id
+        FROM print_status 
+        WHERE id = ?
+    '''
+    search = (id,)
+    cursor = database.cursor()
+    cursor.execute(search_sql, search)
+    found = cursor.fetchone()
+    print(found)
 
 def save_printer_status(status, database):
-    sql = '''
+    save_sql = '''
         INSERT INTO 
-        print_status(date, printer, printer_id, state, job, mins, task_id)
+        print_status(id, date, printer, printer_id, state, job, mins, task_id)
         VALUES
-        (CURRENT_TIMESTAMP, ?,?,?,?,?,?)
+        (?, CURRENT_TIMESTAMP, ?,?,?,?,?,?)        
+        ON CONFLICT(id) 
+        DO UPDATE SET 
+        date = excluded.date, state = excluded.state, mins = excluded.mins;
     '''
     row = (
-        status["name"], status["printer_id"], status["state"],
+        get_id(status), status["name"], status["printer_id"], status["state"],
         status["job"], status["mins"], status["task_id"]
     )
     try:
         cursor = database.cursor()
-        cursor.execute(sql, row)
+        cursor.execute(save_sql, row)
         database.commit()
         result = True
     except sqlite3.OperationalError as e:
@@ -68,7 +93,7 @@ def save_printer_status(status, database):
     return result
 
 
-def get_printer_status(printer, printer_id):
+def get_status_from_mqtt(printer, printer_id):
     auth = {"username": printer["username"], "password": printer["access_code"]}
     tls = ssl._create_unverified_context()
     status = {}
@@ -95,12 +120,13 @@ def get_printer_status(printer, printer_id):
 
 
 def loop_over_printers():
+    print("Loop starting")
     database = get_database_handle()
 
     for printer_id in PRINTERS:
         printer = PRINTERS[printer_id]
-        print("Looping " + printer["name"] + " (" + printer_id + ")")
-        status = get_printer_status(printer, printer_id)
+        print("Looping " + printer["name"] + " (" + printer_id + " " + printer["ip"] + ")")
+        status = get_status_from_mqtt(printer, printer_id)
         save_printer_status(status, database)
         save_image(printer["ip"], printer["access_code"])
 
