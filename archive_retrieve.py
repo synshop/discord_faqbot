@@ -1,13 +1,8 @@
 import paho.mqtt.subscribe as subscribe
-import json, ssl, config, requests, sqlite3, pytz, av, PIL, hashlib
-from bs4 import BeautifulSoup
-from pty import slave_open
-
-from printer_config import PRINTERS
+import json, ssl, sqlite3, av, hashlib
 
 db_file = "printers.sqlite"
 printer_table = "print_status"
-
 
 def get_database_handle():
     create_table_statement = """CREATE TABLE IF NOT EXISTS print_status (
@@ -47,6 +42,7 @@ def save_image(ip, password):
             video.close()
             return
 
+
 def get_id(status):
     return hashlib.md5(
         status["name"].encode() +
@@ -66,7 +62,8 @@ def get_by_id(id, database):
     cursor = database.cursor()
     cursor.execute(search_sql, search)
     found = cursor.fetchone()
-    print(found)
+    return found
+
 
 def save_printer_status(status, database):
     save_sql = '''
@@ -119,47 +116,3 @@ def get_status_from_mqtt(printer, printer_id):
     return status
 
 
-def loop_over_printers():
-    print("Loop starting")
-    database = get_database_handle()
-
-    for printer_id in PRINTERS:
-        printer = PRINTERS[printer_id]
-        print("Looping " + printer["name"] + " (" + printer_id + " " + printer["ip"] + ")")
-        status = get_status_from_mqtt(printer, printer_id)
-        save_printer_status(status, database)
-        save_image(printer["ip"], printer["access_code"])
-
-    database.close()
-    print("Loop complete")
-
-
-def get_shop_hours():
-    r = requests.get(config.SHOP_HOURS_URL)
-    soup = BeautifulSoup(r.text, 'html.parser')
-    shop_hours = soup.find(id="shophours")
-
-    hours_dict = {}
-
-    for tr in shop_hours.find_all('tr'):
-        td = tr.find_all("td")
-        hours_dict[td[0].text] = td[1].text
-
-    markdown_string = f'```\nCurrent Shop Hours (fetched from https://synshop.org/hours) \n===\n'
-
-    for k, v in hours_dict.items():
-        spaces = ""
-        s = 11 - (len(k) + 1)
-        for x in range(s):
-            spaces = spaces + " "
-
-        markdown_string = markdown_string + f'{k}:{spaces}{v}\n'
-
-    markdown_string = markdown_string + f'\n{config.SHOP_ADDRESS}\n'
-    markdown_string = markdown_string + f'\n{config.MEMBERSHIP_NOTICE}\n```'
-
-    return markdown_string
-
-
-loop_over_printers()
-# print(get_shop_hours())
