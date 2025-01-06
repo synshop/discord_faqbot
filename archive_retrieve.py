@@ -1,5 +1,5 @@
 import paho.mqtt.subscribe as subscribe
-import json, ssl, sqlite3, av, hashlib
+import json, ssl, sqlite3, av, hashlib, os
 
 db_file = "printers.sqlite"
 printer_table = "print_status"
@@ -35,15 +35,19 @@ def get_database_handle():
 
 
 # Thanks https://github.com/Cacsjep/pyrtsputils/blob/main/snapshot_generator.py
-def save_image(ip, password):
-    url = "rtsps://bblp:" + password + "@" + ip + ":322/streaming/live/1"
+def save_image(printer):
+    url = "rtsps://bblp:" + printer["access_code"] + "@" + printer["ip"] + ":322/streaming/live/1"
     video = av.open(url, 'r')
-    for packet in video.demux():
-        for frame in packet.decode():
-            frame.to_image().save(f'/tmp/{ip}.jpg')
-            video.close()
-            return
-
+    path = '/tmp/' + printer["ip"] + '.jpg'
+    try:
+        for packet in video.demux():
+            for frame in packet.decode():
+                frame.to_image().save(path)
+                video.close()
+                return path
+    except Exception as e:
+        print("Failed to capture image from " + printer["ip"] + " Error:" + e)
+        return None
 
 def get_job_hash(status):
     return hashlib.md5(
@@ -55,8 +59,7 @@ def get_job_hash(status):
 
 def get_by_job_hash(job_hash, database):
     search_sql = '''
-        SELECT      
-            job_hash, date, printer, printer_id, state, job, mins, task_id, raw_json
+        SELECT *
         FROM print_status 
         WHERE job_hash = ?
     '''
@@ -70,16 +73,24 @@ def get_by_job_hash(job_hash, database):
 def save_printer_status(status, database):
     save_sql = '''
         INSERT INTO 
-        print_status(job_hash, date, printer, printer_id, state, job, mins, task_id, raw_json)
+        print_status(job_hash, date, printer, printer_id, state, job, mins, task_id, raw_json, image)
         VALUES
-        (?, CURRENT_TIMESTAMP, ?,?,?,?,?,?,?)
+        (?, CURRENT_TIMESTAMP, ?,?,?,?,?,?,?,?)
         ON CONFLICT(job_hash) 
         DO UPDATE SET 
-        date = excluded.date, state = excluded.state, mins = excluded.mins, raw_json = excluded.raw_json;
+        date = excluded.date, state = excluded.state, mins = excluded.mins, 
+        raw_json = excluded.raw_json, image = excluded.image;
     '''
+    path = status["image_path"]
+    if path is not None and os.path.exists(path):
+        with open(path, 'rb') as file:
+            image = file.read()
+    else:
+        image = None
+
     row = (
         get_job_hash(status), status["name"], status["printer_id"], status["state"],
-        status["job"], status["mins"], status["task_id"], status["raw_json"]
+        status["job"], status["mins"], status["task_id"], status["raw_json"], image
     )
     try:
         cursor = database.cursor()
