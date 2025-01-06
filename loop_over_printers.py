@@ -14,7 +14,11 @@ for printer_id in PRINTERS:
         database
     )
     c_mins = int(current_status["mins"])
-    p_mins = int(prior_status["mins"])
+    if prior_status is not None:
+        p_mins = int(prior_status["mins"])
+    else:
+        p_mins = -1
+
     if (prior_status is None or
             prior_status["state"] != current_status["state"] or
             c_mins != p_mins):

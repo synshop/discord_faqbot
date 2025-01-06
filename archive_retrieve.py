@@ -14,7 +14,8 @@ def get_database_handle():
         job text, 
         mins text,
         task_id text,
-        image BLOB
+        image BLOB,
+        raw_json text
     );"""
 
     try:
@@ -55,7 +56,7 @@ def get_job_hash(status):
 def get_by_job_hash(job_hash, database):
     search_sql = '''
         SELECT      
-            job_hash, date, printer, printer_id, state, job, mins, task_id
+            job_hash, date, printer, printer_id, state, job, mins, task_id, raw_json
         FROM print_status 
         WHERE job_hash = ?
     '''
@@ -69,16 +70,16 @@ def get_by_job_hash(job_hash, database):
 def save_printer_status(status, database):
     save_sql = '''
         INSERT INTO 
-        print_status(job_hash, date, printer, printer_id, state, job, mins, task_id)
+        print_status(job_hash, date, printer, printer_id, state, job, mins, task_id, raw_json)
         VALUES
-        (?, CURRENT_TIMESTAMP, ?,?,?,?,?,?)        
+        (?, CURRENT_TIMESTAMP, ?,?,?,?,?,?,?)
         ON CONFLICT(job_hash) 
         DO UPDATE SET 
-        date = excluded.date, state = excluded.state, mins = excluded.mins;
+        date = excluded.date, state = excluded.state, mins = excluded.mins, raw_json = excluded.raw_json;
     '''
     row = (
         get_job_hash(status), status["name"], status["printer_id"], status["state"],
-        status["job"], status["mins"], status["task_id"]
+        status["job"], status["mins"], status["task_id"], status["raw_json"]
     )
     try:
         cursor = database.cursor()
@@ -111,6 +112,7 @@ def get_status_from_mqtt(printer, printer_id):
         status["job"] = printer_object["print"]["subtask_name"]
         status["mins"] = printer_object["print"]["mc_remaining_time"]
         status["task_id"] = printer_object["print"]["task_id"]
+        status["raw_json"] = str(printer_object)
     except Exception as e:
         print(f'Failed getting status for {printer["name"]} ({printer["ip"]}:{printer["port"]})', e)
 
