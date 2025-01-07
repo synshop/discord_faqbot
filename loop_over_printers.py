@@ -1,4 +1,4 @@
-import archive_retrieve as ar
+import os, archive_retrieve as ar
 from printer_config import PRINTERS
 
 print("Loop starting")
@@ -26,6 +26,7 @@ for printer_id in PRINTERS:
         image_path = ar.save_image(printer)
         current_status["image_path"] = image_path
         ar.save_printer_status(current_status, database)
+        os.remove(image_path)
         print(printer_str + " changed, wrote to DB")
     else:
         print(printer_str + " unchanged, no DB updates")

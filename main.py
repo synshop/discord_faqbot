@@ -1,13 +1,6 @@
-import discord
-import requests, string
 from bs4 import BeautifulSoup
+import config, discord_token, requests, string, discord, os, archive_retrieve as ar
 
-import paho.mqtt.subscribe as subscribe
-
-import json, ssl
-import config, discord_token
-
-from printer_config import PRINTERS
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -15,34 +8,33 @@ intents.messages = True
 
 client = discord.Client(intents=intents)
 
-def get_printer_status():
-    
+async def send_printer_status(message):
     # thanks https://plainenglish.io/blog/send-an-embed-with-a-discord-bot-in-python
-    embedInner = discord.Embed(title="🖨 Printer Status 🖨",
+    database = ar.get_database_handle()
+    all_printers = ar.get_status_from_db(database)
+    for printer in all_printers:
+        embed = discord.Embed(title="🖨 " + printer["printer"] + " 🖨",
                                color=0xFF5733)
-    for p in PRINTERS:
-        printer = PRINTERS[p]
-
-        auth = {"username":printer["username"],"password":printer["access_code"]}
-        tls = ssl._create_unverified_context()
-
-        msg = subscribe.simple(topics=printer["topic_name"],hostname=printer["ip"],port=printer["port"],auth=auth,tls=tls)
-        printer_object = json.loads(msg.payload)
-
-        name = printer["name"]
-        job = printer_object["print"]["subtask_name"]
-        state = printer_object["print"]["gcode_state"]
-        mins = printer_object["print"]["mc_remaining_time"]
-        task_id = printer_object["print"]["task_id"]
-
-        if state == "RUNNING":
-            value = """`{0}`\n{1} Min Remain (ID {2})""".format(job, mins, task_id)
+        if printer["state"] == "RUNNING":
+            # todo - avoid writing to disk
+            image_path  = "/tmp/" + printer["job_hash"] + ".jpg"
+            with open(image_path, 'wb') as file:
+                file.write(printer["image"])
+            file = discord.File(image_path, filename="printer.jpg")
+            value = ("""`{0}` (ID {2})\n{1} Min Remain""".
+                     format(printer["job"], printer["mins"], printer["task_id"]))
+            embed.set_image(url="attachment://printer.jpg")
         else:
             value = "Idle"
+            file = None
+            image_path = None
 
-        embedInner.add_field(name=name, value=value, inline=False)
+        embed.add_field(name=printer["printer"], value=value, inline=False)
+        await message.channel.send(embed=embed, file=file)
+        if image_path is not None:
+            os.remove(image_path)
 
-    return embedInner
+    database.close()
 
 def get_shop_hours():
     r = requests.get(config.SHOP_HOURS_URL)
@@ -85,7 +77,7 @@ async def on_message(message):
     m = m.translate(str.maketrans('', '', string.punctuation))
 
     if message.channel.name == config.PRINTER_CHANNEL and m == config.PRINTER_STATUS:
-        await message.channel.send(embed=get_printer_status())
+        await send_printer_status(message)
 
     for phrase in config.PHRASES:
         if phrase in m:

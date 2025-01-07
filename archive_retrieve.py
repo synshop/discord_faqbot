@@ -55,7 +55,19 @@ def get_job_hash(status):
         status["job"].encode() +
         status["printer_id"].encode()
     ).hexdigest()
-
+# todo - protect against job not being set some how?!
+#
+# Loop starting
+# Replicator 1 (3DP-00M-748 10.0.40.126) unchanged, no DB updates
+# Failed getting status for Replicator A (10.0.40.228:8883) 'gcode_state'
+# Traceback (most recent call last):
+#   File "/home/mrjones/Documents/discord_faqbot/loop_over_printers.py", line 12, in <module>
+#     job_hash = ar.get_job_hash(current_status)
+#   File "/home/mrjones/Documents/discord_faqbot/archive_retrieve.py", line 55, in get_job_hash
+#     status["job"].encode() +
+#     ~~~~~~^^^^^^^
+# KeyError: 'job'
+# (venv) FAIL
 
 def get_by_job_hash(job_hash, database):
     search_sql = '''
@@ -68,6 +80,19 @@ def get_by_job_hash(job_hash, database):
     cursor.execute(search_sql, search)
     found = cursor.fetchone()
     return found
+
+# todo - this should more intelligently get 3 printers, not last 3 rows, as that might get out of sync
+def get_status_from_db(database):
+    get_sql = '''
+        SELECT *
+        FROM print_status 
+        ORDER BY date DESC
+        LIMIT 3;
+    '''
+    cursor = database.cursor()
+    cursor.execute(get_sql)
+    printers = cursor.fetchall()
+    return printers
 
 
 def save_printer_status(status, database):
