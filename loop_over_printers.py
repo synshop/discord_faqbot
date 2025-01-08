@@ -10,6 +10,9 @@ for printer_id in PRINTERS:
 
     current_status = ar.get_status_from_mqtt(printer, printer_id)
     job_hash = ar.get_job_hash(current_status)
+    if job_hash is None:
+        print("Error: current_status was empty, skipping " + printer_str)
+        continue
     prior_status = ar.get_by_job_hash(
         job_hash,
         database

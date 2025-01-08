@@ -50,24 +50,15 @@ def save_image(printer):
         return None
 
 def get_job_hash(status):
-    return hashlib.md5(
-        status["name"].encode() +
-        status["job"].encode() +
-        status["printer_id"].encode()
-    ).hexdigest()
-# todo - protect against job not being set some how?!
-#
-# Loop starting
-# Replicator 1 (3DP-00M-748 10.0.40.126) unchanged, no DB updates
-# Failed getting status for Replicator A (10.0.40.228:8883) 'gcode_state'
-# Traceback (most recent call last):
-#   File "/home/mrjones/Documents/discord_faqbot/loop_over_printers.py", line 12, in <module>
-#     job_hash = ar.get_job_hash(current_status)
-#   File "/home/mrjones/Documents/discord_faqbot/archive_retrieve.py", line 55, in get_job_hash
-#     status["job"].encode() +
-#     ~~~~~~^^^^^^^
-# KeyError: 'job'
-# (venv) FAIL
+    if status and status["name"] and status["job"] and status["printer_id"]:
+        return hashlib.md5(
+            status["name"].encode() +
+            status["job"].encode() +
+            status["printer_id"].encode()
+        ).hexdigest()
+    else:
+        return None
+
 
 def get_by_job_hash(job_hash, database):
     search_sql = '''
