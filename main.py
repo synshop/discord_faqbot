@@ -27,7 +27,7 @@ async def send_printer_status(message):
             with open(image_path, 'wb') as file:
                 file.write(status["image"])
             file = discord.File(image_path, filename="printer.jpg")
-            embed.set_image(url="attachment://printer.jpg")
+            embed.set_thumbnail(url="attachment://printer.jpg")
         else:
             value = "Failed to get status for printer " + printer_id
             file = None
