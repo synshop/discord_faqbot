@@ -5,18 +5,25 @@ db_file = "printers.sqlite"
 printer_table = "print_status"
 
 def get_database_handle():
-    create_table_statement = """CREATE TABLE IF NOT EXISTS print_status (
-        job_hash text PRIMARY KEY,
-        date DATETIME NOT NULL,  
-        printer text NOT NULL, 
-        printer_id text NOT NULL, 
-        state text NOT NULL, 
-        job text, 
-        mins text,
-        task_id text,
-        image BLOB,
-        raw_json text
-    );"""
+    create_table_statement = """
+        CREATE TABLE IF NOT EXISTS print_status (
+            job_hash text PRIMARY KEY,
+            date DATETIME NOT NULL,
+            printer text NOT NULL,
+            printer_id text NOT NULL,
+            state text NOT NULL,
+            job text,
+            mins text,
+            task_id text,
+            image BLOB,
+            raw_json text,
+            owner text
+        );
+    """
+    create_idx_printer_date = """
+        CREATE INDEX IF NOT EXISTS  idx_printer_date
+        ON print_status (printer_id);
+    """
 
     try:
         with sqlite3.connect(
@@ -25,6 +32,8 @@ def get_database_handle():
                 sqlite3.PARSE_COLNAMES) as database:
             cursor = database.cursor()
             cursor.execute(create_table_statement)
+            database.commit()
+            cursor.execute(create_idx_printer_date)
             database.commit()
     except sqlite3.OperationalError as e:
         print("Failed to open database", db_file, ". Error is:", e)
@@ -61,30 +70,39 @@ def get_job_hash(status):
 
 
 def get_by_job_hash(job_hash, database):
-    search_sql = '''
-        SELECT *
-        FROM print_status 
-        WHERE job_hash = ?
-    '''
-    search = (job_hash, )
-    cursor = database.cursor()
-    cursor.execute(search_sql, search)
-    found = cursor.fetchone()
-    return found
+    try:
+        search_sql = '''
+            SELECT *
+            FROM print_status
+            WHERE job_hash = ?
+        '''
+        search = (job_hash, )
+        cursor = database.cursor()
+        cursor.execute(search_sql, search)
+        found = cursor.fetchone()
+        return found
+    except sqlite3.OperationalError as e:
+        print("Failed to get job by hash from db for ", job_hash, ". Error is:", e)
+        result = False
 
-# todo - this should more intelligently get 3 printers, not last 3 rows, as that might get out of sync
-def get_status_from_db(database):
-    get_sql = '''
-        SELECT *
-        FROM print_status 
-        ORDER BY date DESC
-        LIMIT 3;
-    '''
-    cursor = database.cursor()
-    cursor.execute(get_sql)
-    printers = cursor.fetchall()
-    return printers
 
+def get_status_from_db(printer_id, database):
+    try:
+        get_sql = '''
+            SELECT *
+            FROM print_status
+            WHERE printer_id = ?
+            ORDER BY date DESC
+            LIMIT 1;
+        '''
+        search = (printer_id, )
+        cursor = database.cursor()
+        cursor.execute(get_sql, search)
+        printers = cursor.fetchone()
+        return printers
+    except sqlite3.OperationalError as e:
+        print("Failed to get printer status from db for ", printer_id, ". Error is:", e)
+        result = False
 
 def save_printer_status(status, database):
     save_sql = '''

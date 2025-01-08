@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+from printer_config import PRINTERS
 import config, discord_token, requests, string, discord, os, archive_retrieve as ar
 
 
@@ -11,30 +12,41 @@ client = discord.Client(intents=intents)
 async def send_printer_status(message):
     # thanks https://plainenglish.io/blog/send-an-embed-with-a-discord-bot-in-python
     database = ar.get_database_handle()
-    all_printers = ar.get_status_from_db(database)
-    for printer in all_printers:
-        embed = discord.Embed(title="🖨 " + printer["printer"] + " 🖨",
-                               color=0xFF5733)
-        if printer["state"] == "RUNNING":
-            # todo - avoid writing to disk
-            image_path  = "/tmp/" + printer["job_hash"] + ".jpg"
+
+    for printer_id in PRINTERS:
+        status = ar.get_status_from_db(printer_id, database)
+        if status is not False:
+            printer = status["printer"]
+            embed = discord.Embed(
+                title="🖨 " + printer + ": " + status["state"].title(),
+                color=0xFF5733
+            )
+
+            value = (
+                """`{0}`\n{1} Min Remain""".
+                     format(status["job"], status["mins"])
+            )
+
+            # todo - avoid writing to disk in /tmp
+            image_path  = "/tmp/" + status["job_hash"] + ".jpg"
             with open(image_path, 'wb') as file:
-                file.write(printer["image"])
+                file.write(status["image"])
             file = discord.File(image_path, filename="printer.jpg")
-            value = ("""`{0}` (ID {2})\n{1} Min Remain""".
-                     format(printer["job"], printer["mins"], printer["task_id"]))
             embed.set_image(url="attachment://printer.jpg")
         else:
-            value = "Idle"
+            value = "Failed to get status for printer " + printer_id
             file = None
             image_path = None
+            printer = None
 
-        embed.add_field(name=printer["printer"], value=value, inline=False)
+
+        embed.add_field(name=printer, value=value, inline=False)
         await message.channel.send(embed=embed, file=file)
         if image_path is not None:
             os.remove(image_path)
 
     database.close()
+
 
 def get_shop_hours():
     r = requests.get(config.SHOP_HOURS_URL)
@@ -67,6 +79,7 @@ def get_shop_hours():
 async def on_ready():
     print(f'We have logged in as {client.user}.')
     print(f'Printer status keyword is {config.PRINTER_STATUS} and there are {len(config.PHRASES)} shop hour phrases.')
+
 
 @client.event
 async def on_message(message):
