@@ -9,15 +9,13 @@ for printer_id in PRINTERS:
     printer_str = printer["name"] + " (" + printer_id + " " + printer["ip"] + ")"
 
     current_status = ar.get_status_from_mqtt(printer, printer_id)
+    c_mins = int(current_status["mins"])
     job_hash = ar.get_job_hash(current_status)
     if job_hash is None:
-        print("Error: current_status was empty, skipping " + printer_str)
+        print(printer_str + " Error: job_hash was empty, skipping")
         continue
-    prior_status = ar.get_by_job_hash(
-        job_hash,
-        database
-    )
-    c_mins = int(current_status["mins"])
+
+    prior_status = ar.get_by_job_hash(job_hash, database)
     if prior_status is None:
         p_mins = -1
     else:

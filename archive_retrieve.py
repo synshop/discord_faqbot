@@ -1,7 +1,7 @@
-import paho.mqtt.subscribe as subscribe
-import json, ssl, sqlite3, av, hashlib, os, requests, config, discord
+import json, ssl, sqlite3, av, hashlib, os, requests, config, discord, pytz, paho.mqtt.subscribe as subscribe
 from bs4 import BeautifulSoup
 from printer_config import PRINTERS
+from datetime import datetime
 
 db_file = "printers.sqlite"
 printer_table = "print_status"
@@ -91,7 +91,9 @@ def get_by_job_hash(job_hash, database):
 def get_status_from_db(printer_id, database):
     try:
         get_sql = '''
-            SELECT *
+            SELECT 
+                strftime('%Y-%m-%d %I:%M%p',datetime(date,'localtime')) dateLocal, 
+                *
             FROM print_status
             WHERE printer_id = ?
             ORDER BY date DESC
@@ -179,9 +181,10 @@ async def send_printer_status(message):
                 color=0xFF5733
             )
 
-            value = ("""`{0}`\n{1} Min Remain""".format(status["job"], status["mins"]))
-            image_path  = "/tmp/" + status["job_hash"] + ".jpg" # todo - avoid writing to disk
-            with open(image_path, 'wb') as file:
+            value = ("""`{0}`\n{1} Min Remain\n\n_{2}_""".
+                     format(status["job"], status["mins"], status["dateLocal"]))
+            image_path  = "/tmp/" + status["job_hash"] + ".jpg"
+            with open(image_path, 'wb') as file: # todo - avoid writing to disk
                 file.write(status["image"])
             file = discord.File(image_path, filename="printer.jpg")
             embed.set_thumbnail(url="attachment://printer.jpg")
