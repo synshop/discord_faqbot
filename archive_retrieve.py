@@ -1,7 +1,6 @@
-import json, ssl, sqlite3, av, hashlib, os, requests, config, discord, pytz, paho.mqtt.subscribe as subscribe
+import json, ssl, sqlite3, av, hashlib, os, requests, config, discord, paho.mqtt.subscribe as subscribe
 from bs4 import BeautifulSoup
 from printer_config import PRINTERS
-from datetime import datetime
 
 db_file = "printers.sqlite"
 printer_table = "print_status"
