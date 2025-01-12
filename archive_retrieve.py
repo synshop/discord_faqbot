@@ -1,4 +1,4 @@
-import json, ssl, sqlite3, av, hashlib, os, requests, subprocess, config, discord, paho.mqtt.subscribe as subscribe
+import json, ssl, sqlite3, hashlib, os, requests, subprocess, config, discord, paho.mqtt.subscribe as subscribe
 from bs4 import BeautifulSoup
 from printer_config import PRINTERS
 
