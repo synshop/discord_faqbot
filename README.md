@@ -29,7 +29,7 @@ Here's a screenshot of the printer status.  Each status update shows:
 ## Production deploy on Alpine
 
 1. Prepare a server running Alpine on the same LAN as your Bambu printers - login as `root`
-2. Install needed software: `apk add python3 openssh git py3-pip ffmpeg`
+2. Install needed software: `apk add python3 openssh git py3-pip ffmpeg pkgconfig`
 3. Ensure SSH is started and and will start at boot: `rc-update add sshd&&service sshd start`
 4. Create a bot user : `adduser bot`
 5. `su - bot` and add ssh keys as needed to `/home/bot/.ssh/authorized_keys`
