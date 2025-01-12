@@ -29,7 +29,7 @@ Here's a screenshot of the printer status.  Each status update shows:
 ## Production deploy on Alpine
 
 1. Prepare a server running Alpine on the same LAN as your Bambu printers - login as `root`
-2. Install needed software: `apk add python3 openssh git py3-pip ffmpeg`
+2. Install needed software: `apk add python3 openssh git py3-pip ffmpeg pkgconfig`
 3. Ensure SSH is started and and will start at boot: `rc-update add sshd&&service sshd start`
 4. Create a bot user : `adduser bot`
 5. `su - bot` and add ssh keys as needed to `/home/bot/.ssh/authorized_keys`
@@ -46,7 +46,7 @@ Here's a screenshot of the printer status.  Each status update shows:
 16. Copy the service file in place for printer status app: `cp printer-loop.service /etc/init.d/printer-loop`
 17. Make them both executable: `chmod ugo+x /etc/init.d/discord-bot && chmod ugo+x /etc/init.d/printer-loop` 
 18. Add it to boot and start it: `rc-service discord-bot start &&  rc-update add discord-bot`
-19. Add it to boot and start it: `rc-service printer-loopt start &&  rc-update add printer-loop`
+19. Add it to boot and start it: `rc-service printer-loop start &&  rc-update add printer-loop`
 
 ## Development
 
