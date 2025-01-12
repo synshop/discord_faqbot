@@ -19,3 +19,6 @@ command="/home/bot/discord_faqbot/venv/bin/python /home/bot/discord_faqbot/main.
 depend() {
         need net
 }
+start_pre() {
+        cd /home/bot/discord_faqbot
+}
