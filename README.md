@@ -46,7 +46,7 @@ Here's a screenshot of the printer status.  Each status update shows:
 16. Copy the service file in place for printer status app: `cp printer-loop.service /etc/init.d/printer-loop`
 17. Make them both executable: `chmod ugo+x /etc/init.d/discord-bot && chmod ugo+x /etc/init.d/printer-loop` 
 18. Add it to boot and start it: `rc-service discord-bot start &&  rc-update add discord-bot`
-19. Add it to boot and start it: `rc-service printer-loopt start &&  rc-update add printer-loop`
+19. Add it to boot and start it: `rc-service printer-loop start &&  rc-update add printer-loop`
 
 ## Development
 
