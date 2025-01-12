@@ -1,4 +1,4 @@
-import json, ssl, sqlite3, av, hashlib, os, requests, config, discord, paho.mqtt.subscribe as subscribe
+import json, ssl, sqlite3, av, hashlib, os, requests, subprocess, config, discord, paho.mqtt.subscribe as subscribe
 from bs4 import BeautifulSoup
 from printer_config import PRINTERS
 
@@ -47,14 +47,12 @@ def get_database_handle():
 # Thanks https://github.com/Cacsjep/pyrtsputils/blob/main/snapshot_generator.py
 def save_image(printer):
     url = "rtsps://bblp:" + printer["access_code"] + "@" + printer["ip"] + ":322/streaming/live/1"
-    video = av.open(url, 'r')
     path = '/tmp/' + printer["ip"] + '.jpg'
+    shell = config.FFMPEG + " -loglevel fatal -y -i " + url + " -vframes 1 " + path
+
     try:
-        for packet in video.demux():
-            for frame in packet.decode():
-                frame.to_image().save(path)
-                video.close()
-                return path
+        subprocess.run(shell, shell=True)
+        return path
     except Exception as e:
         print("Failed to capture image from " + printer["ip"] + " Error:" + e)
         return None
