@@ -37,3 +37,5 @@ MEMBERSHIP_NOTICE = """You'll need to have a membership and sign a waiver before
 PRINTER_STATUS = "GETPRINTERSTATUS"
 
 PRINTER_CHANNEL = "3d-printing-status"
+
+FFMPEG="/usr/bin/ffmpeg"
