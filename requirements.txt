@@ -11,5 +11,4 @@ soupsieve==2.5
 urllib3==2.0.6
 paho-mqtt==2.1.0
 pytz
-av
 Pillow
