@@ -59,7 +59,8 @@ def save_image(printer):
         return None
 
 def get_job_hash(status):
-    if status and status["name"] and status["job"] and status["printer_id"]:
+    # thanks https://stackoverflow.com/a/3845371
+    if status and "name" in status and "job" in status and "printer_id" in status:
         return hashlib.md5(
             status["name"].encode() +
             status["job"].encode() +
@@ -185,7 +186,7 @@ async def send_printer_status(message):
             with open(image_path, 'wb') as file: # todo - avoid writing to disk
                 file.write(status["image"])
             file = discord.File(image_path, filename="printer.jpg")
-            embed.set_thumbnail(url="attachment://printer.jpg")
+            embed.set_image(url="attachment://printer.jpg")
         else:
             value = "Failed to get status for printer " + printer_id
             file = None
