@@ -1,8 +1,9 @@
-import json, ssl, sqlite3, hashlib, os, requests, subprocess, config, discord, paho.mqtt.subscribe as subscribe
+import json, ssl, sqlite3, hashlib, os, requests, subprocess, discord, audioop, paho.mqtt.subscribe as subscribe
+from data import config
 from bs4 import BeautifulSoup
-from printer_config import PRINTERS
+from data.printer_config import PRINTERS
 
-db_file = "printers.sqlite"
+db_file = "data/printers.sqlite"
 printer_table = "print_status"
 
 def get_database_handle():
@@ -172,7 +173,7 @@ async def send_printer_status(message):
 
     for printer_id in PRINTERS:
         status = get_status_from_db(printer_id, database)
-        if status is not False:
+        if status is not False and status is not None:
             printer = status["printer"]
             embed = discord.Embed(
                 title="🖨 " + printer + ": " + status["state"].title(),
@@ -187,10 +188,14 @@ async def send_printer_status(message):
             file = discord.File(image_path, filename="printer.jpg")
             embed.set_image(url="attachment://printer.jpg")
         else:
-            value = "Failed to get status for printer " + printer_id
+            embed = discord.Embed(
+                title="🖨 " + PRINTERS[printer_id]["name"] + ": Error",
+                color=0xFF5733
+            )
+            value = "Failed to query DB for printer " + printer_id
             file = None
             image_path = None
-            printer = None
+            printer = ""
 
         embed.add_field(name=printer, value=value, inline=False)
         await message.channel.send(embed=embed, file=file)

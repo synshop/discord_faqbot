@@ -1,6 +1,6 @@
 import os, archive_retrieve as ar
 from time import sleep
-from printer_config import PRINTERS
+from data.printer_config import PRINTERS
 
 
 while True:

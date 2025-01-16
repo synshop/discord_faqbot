@@ -1,4 +1,5 @@
-import config, discord_token, string, discord, archive_retrieve as ar
+import string, discord, archive_retrieve as ar
+from data import config, discord_token
 
 intents = discord.Intents.default()
 intents.message_content = True
