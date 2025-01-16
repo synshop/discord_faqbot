@@ -58,7 +58,8 @@ def save_image(printer):
         return None
 
 def get_job_hash(status):
-    if status and status["name"] and status["job"] and status["printer_id"]:
+    # thanks https://stackoverflow.com/a/3845371
+    if status and "name" in status and "job" in status and "printer_id" in status:
         return hashlib.md5(
             status["name"].encode() +
             status["job"].encode() +
