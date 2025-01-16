@@ -31,13 +31,12 @@ Here's a screenshot of the printer status.  Each status update shows:
 ## Install 
 
 1. Have a server you can run `docker compose` on
-2. Install needed software: `apk add python3 openssh git py3-pip ffmpeg pkgconfig`
-3. Check out the discord bot code: git clone https://github.com/synshop/discord_faqbot.git
-4. Get into the `data` directory: `cd discord_faqbot/data`
-5. Create the token file discord_token.py file with the production token: `cp discord_token_dist.py discord_token.py` . For steps on how to create the token, see [this write up](https://realpython.com/how-to-make-a-discord-bot-python/#creating-an-application).  The result is a 73 char string like `AAAAAAAAAAAAAAAAAAAAAAAAAA.BBBBBB.CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC`
-6. Create the config file config.py file: `cp config_dist.py config.py` . The contents are likely production ready and not need changes (unless you're not the SYN Shop ;)
-7. Create the printer configuration file `cp printer_config_dist.py printer_config.py` .  Fill out all important information about the Bambu printers in the environment.
-8. Start the service with `docker compose up -d`
+2. Check out the discord bot code: git clone https://github.com/synshop/discord_faqbot.git
+3. Get into the `data` directory: `cd discord_faqbot/data`
+4. Create the token file discord_token.py file with the production token: `cp discord_token_dist.py discord_token.py` . For steps on how to create the token, see [this write up](https://realpython.com/how-to-make-a-discord-bot-python/#creating-an-application).  The result is a 73 char string like `AAAAAAAAAAAAAAAAAAAAAAAAAA.BBBBBB.CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC`
+5. Create the config file config.py file: `cp config_dist.py config.py` . The contents are likely production ready and not need changes (unless you're not the SYN Shop ;)
+6. Create the printer configuration file `cp printer_config_dist.py printer_config.py` .  Fill out all important information about the Bambu printers in the environment.
+7. Start the service with `docker compose up -d`
 
 ## Upgrade
 
