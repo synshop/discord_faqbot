@@ -1,0 +1,22 @@
+services:
+  discord-bot-loop:
+    build:
+      context: .
+    image: discord-bot
+    volumes:
+      - "./data:/app/data"
+    restart: unless-stopped
+    environment:
+      TZ: ${TIMEKPR_TZ:-America/Los_Angeles}
+    command: "python ./loop_over_printers.py"
+  discord-bot:
+    build:
+      context: .
+    image: discord-bot
+    volumes:
+      - "./data:/app/data"
+    restart: unless-stopped
+    environment:
+      TZ: ${TIMEKPR_TZ:-America/Los_Angeles}
+    depends_on:
+      - discord-bot-loop

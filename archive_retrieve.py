@@ -1,8 +1,9 @@
-import json, ssl, sqlite3, hashlib, os, requests, subprocess, config, discord, paho.mqtt.subscribe as subscribe
+import json, ssl, sqlite3, hashlib, os, requests, subprocess, discord, audioop, paho.mqtt.subscribe as subscribe
+from data import config
 from bs4 import BeautifulSoup
-from printer_config import PRINTERS
+from data.printer_config import PRINTERS
 
-db_file = "printers.sqlite"
+db_file = "data/printers.sqlite"
 printer_table = "print_status"
 
 def get_database_handle():
