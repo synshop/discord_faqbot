@@ -8,7 +8,7 @@ client = discord.Client(intents=intents)
 
 @client.event
 async def on_ready():
-    print(f'We have logged in as {client.user}.')
+    print(f'We have logged in as the {client.user}.')
     print(f'Printer status keyword is {config.PRINTER_STATUS} and there are {len(config.PHRASES)} shop hour phrases.')
 
 
