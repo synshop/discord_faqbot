@@ -21,7 +21,7 @@ def get_database_handle():
             image BLOB,
             raw_json text,
             owner text,
-            fail_reason text
+            fail_reason integer
         );
     """
     create_idx_printer_date = """
@@ -174,7 +174,9 @@ def get_bambu_error_msg(error_code=None):
 
 def check_for_fail_reason(status=None):
     if status["fail_reason"] != 0:
-        return status["fail_reason"]
+        return int(status["fail_reason"])
+    else:
+        return 0
 
 # thanks https://plainenglish.io/blog/send-an-embed-with-a-discord-bot-in-python
 async def send_printer_status(message):
@@ -190,11 +192,10 @@ async def send_printer_status(message):
             )
             
             failure_code = check_for_fail_reason(status)
-            print(failure_code)
-
+            
             if failure_code != 0:
                 
-                value = ("""`{0}`\n\nError: **{1}**\n\n_{3}_""".
+                value = ("""`{0}`\n\n**{1}**\n\n_{3}_""".
                      format(status["job"], get_bambu_error_msg(failure_code),status["mins"], status["dateLocal"]))
             else:
                 value = ("""`{0}`\n{1} Min Remain\n\n_{2}_""".
