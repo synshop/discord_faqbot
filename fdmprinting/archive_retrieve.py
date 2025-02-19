@@ -1,7 +1,8 @@
-import json, ssl, sqlite3, hashlib, os, requests, subprocess, discord, audioop, paho.mqtt.subscribe as subscribe
+import json, ssl, sqlite3, hashlib, os, subprocess, discord, paho.mqtt.subscribe as subscribe
+
 from data import config
-from bs4 import BeautifulSoup
 from data.printer_config import PRINTERS
+from .const_print_errors import PRINT_ERROR_ERRORS
 
 db_file = "data/printers.sqlite"
 printer_table = "print_status"
@@ -19,7 +20,8 @@ def get_database_handle():
             task_id text,
             image BLOB,
             raw_json text,
-            owner text
+            owner text,
+            fail_reason text
         );
     """
     create_idx_printer_date = """
@@ -43,7 +45,6 @@ def get_database_handle():
 
     database.row_factory = sqlite3.Row
     return database
-
 
 # Thanks https://github.com/Cacsjep/pyrtsputils/blob/main/snapshot_generator.py
 def save_image(printer):
@@ -69,7 +70,6 @@ def get_job_hash(status):
     else:
         return None
 
-
 def get_by_job_hash(job_hash, database):
     try:
         search_sql = '''
@@ -85,7 +85,6 @@ def get_by_job_hash(job_hash, database):
     except sqlite3.OperationalError as e:
         print("Failed to get job by hash from db for ", job_hash, ". Error is:", e)
         result = False
-
 
 def get_status_from_db(printer_id, database):
     try:
@@ -110,9 +109,9 @@ def get_status_from_db(printer_id, database):
 def save_printer_status(status, database):
     save_sql = '''
         INSERT INTO 
-        print_status(job_hash, date, printer, printer_id, state, job, mins, task_id, raw_json, image)
+        print_status(job_hash, date, printer, printer_id, state, job, mins, task_id, raw_json, image, fail_reason)
         VALUES
-        (?, CURRENT_TIMESTAMP, ?,?,?,?,?,?,?,?)
+        (?, CURRENT_TIMESTAMP, ?,?,?,?,?,?,?,?,?)
         ON CONFLICT(job_hash) 
         DO UPDATE SET 
         date = excluded.date, state = excluded.state, mins = excluded.mins, 
@@ -127,7 +126,8 @@ def save_printer_status(status, database):
 
     row = (
         get_job_hash(status), status["name"], status["printer_id"], status["state"],
-        status["job"], status["mins"], status["task_id"], status["raw_json"], image
+        status["job"], status["mins"], status["task_id"], status["raw_json"], image,
+        status["fail_reason"]
     )
     try:
         cursor = database.cursor()
@@ -138,7 +138,6 @@ def save_printer_status(status, database):
         print("Failed to save printer status", db_file, ". Error is:", e)
         result = False
     return result
-
 
 def get_status_from_mqtt(printer, printer_id):
     auth = {"username": printer["username"], "password": printer["access_code"]}
@@ -153,7 +152,7 @@ def get_status_from_mqtt(printer, printer_id):
             tls=tls
         )
         printer_object = json.loads(msg.payload)
-
+     
         status["name"] = printer["name"]
         status["printer_id"] = printer_id
         status["state"] = printer_object["print"]["gcode_state"]
@@ -161,11 +160,21 @@ def get_status_from_mqtt(printer, printer_id):
         status["mins"] = printer_object["print"]["mc_remaining_time"]
         status["task_id"] = printer_object["print"]["task_id"]
         status["raw_json"] = str(printer_object)
+        status["fail_reason"] = printer_object["print"]["fail_reason"]
     except Exception as e:
         print(f'Failed getting status for {printer["name"]} ({printer["ip"]}:{printer["port"]})', e)
 
     return status
 
+def get_bambu_error_msg(error_code=None):
+    hex_code = f'{int(error_code):x}'
+    for key, value in PRINT_ERROR_ERRORS.items():
+        if hex_code.upper() in key:
+            return value
+
+def check_for_fail_reason(status=None):
+    if status["fail_reason"] != 0:
+        return status["fail_reason"]
 
 # thanks https://plainenglish.io/blog/send-an-embed-with-a-discord-bot-in-python
 async def send_printer_status(message):
@@ -179,9 +188,18 @@ async def send_printer_status(message):
                 title="🖨 " + printer + ": " + status["state"].title(),
                 color=0xFF5733
             )
+            
+            failure_code = check_for_fail_reason(status)
+            print(failure_code)
 
-            value = ("""`{0}`\n{1} Min Remain\n\n_{2}_""".
+            if failure_code != 0:
+                
+                value = ("""`{0}`\n\nError: **{1}**\n\n_{3}_""".
+                     format(status["job"], get_bambu_error_msg(failure_code),status["mins"], status["dateLocal"]))
+            else:
+                value = ("""`{0}`\n{1} Min Remain\n\n_{2}_""".
                      format(status["job"], status["mins"], status["dateLocal"]))
+                
             image_path  = "/tmp/" + status["job_hash"] + ".jpg"
             with open(image_path, 'wb') as file: # todo - avoid writing to disk
                 file.write(status["image"])
@@ -199,34 +217,11 @@ async def send_printer_status(message):
 
         embed.add_field(name=printer, value=value, inline=False)
         await message.channel.send(embed=embed, file=file)
+
         if image_path is not None:
             os.remove(image_path)
 
     database.close()
 
 
-def get_shop_hours():
-    r = requests.get(config.SHOP_HOURS_URL)
-    soup = BeautifulSoup(r.text, 'html.parser')
-    shop_hours = soup.find(id="shophours")
 
-    hours_dict = {}
-
-    for tr in shop_hours.find_all('tr'):
-        td = tr.find_all("td")
-        hours_dict[td[0].text] = td[1].text
-
-    markdown_string = f'```\nCurrent Shop Hours (fetched from https://synshop.org/hours) \n===\n'
-
-    for k,v in hours_dict.items():
-        spaces = ""
-        s = 11 - (len(k) + 1)
-        for x in range(s):
-            spaces = spaces + " "
-
-        markdown_string += f'{k}:{spaces}{v}\n'
-
-    markdown_string += f'\n{config.SHOP_ADDRESS}\n'
-    markdown_string += f'\n{config.MEMBERSHIP_NOTICE}\n```'
-
-    return markdown_string

@@ -1,7 +1,7 @@
-import os, archive_retrieve as ar
+import os
 from time import sleep
 from data.printer_config import PRINTERS
-
+import fdmprinting.archive_retrieve as ar
 
 while True:
     print("Loop starting")
