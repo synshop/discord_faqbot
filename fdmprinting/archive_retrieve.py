@@ -115,7 +115,7 @@ def save_printer_status(status, database):
         ON CONFLICT(job_hash) 
         DO UPDATE SET 
         date = excluded.date, state = excluded.state, mins = excluded.mins, 
-        raw_json = excluded.raw_json, image = excluded.image;
+        raw_json = excluded.raw_json, image = excluded.image, fail_reason exluded.fail_reason;
     '''
     path = status["image_path"]
     if path is not None and os.path.exists(path):
