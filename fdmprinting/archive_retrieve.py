@@ -173,30 +173,19 @@ def get_status_from_mqtt(printer, printer_id):
     return status
 
 
-def get_bambu_error_msg(error_code=None):
-    hex_code = f'{int(error_code):x}'
-    for key, value in PRINT_ERROR_ERRORS.items():
-        if hex_code.upper() in key:
-            return value
-
-
-def check_for_fail_reason(status=None):
-    if status["fail_reason"] != 0:
-        return int(status["fail_reason"])
-    else:
-        return 0
-
-
 def get_status_msg(status):
     if status["fail_reason"] != 0:
        hex_code = f'{status["fail_reason"]:x}'
+
+       # Addreses the fixed width format of const_print_errors.py
        if len(hex_code) == 7: hex_code = "0" + str(hex_code)
+       
        for key, value in PRINT_ERROR_ERRORS.items():
             if hex_code.upper() == key:
                return "\n\n**" + value + "**\n\n"
-    else:
-        return "\n\n"
     
+    return "\n\n"
+
 
 # thanks https://plainenglish.io/blog/send-an-embed-with-a-discord-bot-in-python
 async def send_printer_status(message):
