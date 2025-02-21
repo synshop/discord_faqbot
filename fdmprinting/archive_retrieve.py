@@ -46,6 +46,7 @@ def get_database_handle():
     database.row_factory = sqlite3.Row
     return database
 
+
 # Thanks https://github.com/Cacsjep/pyrtsputils/blob/main/snapshot_generator.py
 def save_image(printer):
     url = "rtsps://bblp:" + printer["access_code"] + "@" + printer["ip"] + ":322/streaming/live/1"
@@ -59,6 +60,7 @@ def save_image(printer):
         print("Failed to capture image from " + printer["ip"] + " Error:" + e)
         return None
 
+
 def get_job_hash(status):
     # thanks https://stackoverflow.com/a/3845371
     if status and "name" in status and "job" in status and "printer_id" in status:
@@ -69,6 +71,7 @@ def get_job_hash(status):
         ).hexdigest()
     else:
         return None
+
 
 def get_by_job_hash(job_hash, database):
     try:
@@ -85,6 +88,7 @@ def get_by_job_hash(job_hash, database):
     except sqlite3.OperationalError as e:
         print("Failed to get job by hash from db for ", job_hash, ". Error is:", e)
         result = False
+
 
 def get_status_from_db(printer_id, database):
     try:
@@ -106,6 +110,7 @@ def get_status_from_db(printer_id, database):
         print("Failed to get printer status from db for ", printer_id, ". Error is:", e)
         result = False
 
+
 def save_printer_status(status, database):
     save_sql = '''
         INSERT INTO 
@@ -115,7 +120,7 @@ def save_printer_status(status, database):
         ON CONFLICT(job_hash) 
         DO UPDATE SET 
         date = excluded.date, state = excluded.state, mins = excluded.mins, 
-        raw_json = excluded.raw_json, image = excluded.image, fail_reason exluded.fail_reason;
+        raw_json = excluded.raw_json, image = excluded.image, fail_reason = excluded.fail_reason;
     '''
     path = status["image_path"]
     if path is not None and os.path.exists(path):
@@ -138,6 +143,7 @@ def save_printer_status(status, database):
         print("Failed to save printer status", db_file, ". Error is:", e)
         result = False
     return result
+
 
 def get_status_from_mqtt(printer, printer_id):
     auth = {"username": printer["username"], "password": printer["access_code"]}
@@ -166,17 +172,20 @@ def get_status_from_mqtt(printer, printer_id):
 
     return status
 
+
 def get_bambu_error_msg(error_code=None):
     hex_code = f'{int(error_code):x}'
     for key, value in PRINT_ERROR_ERRORS.items():
         if hex_code.upper() in key:
             return value
 
+
 def check_for_fail_reason(status=None):
     if status["fail_reason"] != 0:
         return int(status["fail_reason"])
     else:
         return 0
+
 
 # thanks https://plainenglish.io/blog/send-an-embed-with-a-discord-bot-in-python
 async def send_printer_status(message):
