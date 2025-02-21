@@ -187,6 +187,17 @@ def check_for_fail_reason(status=None):
         return 0
 
 
+def get_status_msg(status):
+    if status["fail_reason"] != 0:
+       hex_code = f'{status["fail_reason"]:x}'
+       if len(hex_code) == 7: hex_code = "0" + str(hex_code)
+       for key, value in PRINT_ERROR_ERRORS.items():
+            if hex_code.upper() == key:
+               return "\n\n**" + value + "**\n\n"
+    else:
+        return "\n\n"
+    
+
 # thanks https://plainenglish.io/blog/send-an-embed-with-a-discord-bot-in-python
 async def send_printer_status(message):
     database = get_database_handle()
@@ -199,16 +210,9 @@ async def send_printer_status(message):
                 title="🖨 " + printer + ": " + status["state"].title(),
                 color=0xFF5733
             )
-            
-            failure_code = check_for_fail_reason(status)
-            
-            if failure_code != 0:
-                
-                value = ("""`{0}`\n\n**{1}**\n\n_{3}_""".
-                     format(status["job"], get_bambu_error_msg(failure_code),status["mins"], status["dateLocal"]))
-            else:
-                value = ("""`{0}`\n{1} Min Remain\n\n_{2}_""".
-                     format(status["job"], status["mins"], status["dateLocal"]))
+
+            value = ("""`{0}`\n{1} Min Remain{2}_{3}_""".
+                     format(status["job"], status["mins"], get_status_msg(status), status["dateLocal"]))
                 
             image_path  = "/tmp/" + status["job_hash"] + ".jpg"
             with open(image_path, 'wb') as file: # todo - avoid writing to disk
@@ -225,7 +229,7 @@ async def send_printer_status(message):
             image_path = None
             printer = ""
 
-        embed.add_field(name=printer, value=value, inline=False)
+        embed.add_field(name="", value=value, inline=False)
         await message.channel.send(embed=embed, file=file)
 
         if image_path is not None:
