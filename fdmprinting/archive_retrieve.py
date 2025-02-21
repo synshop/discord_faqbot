@@ -175,9 +175,10 @@ def get_status_from_mqtt(printer, printer_id):
 
 def get_status_msg(status):
     if status["fail_reason"] != 0:
+       
+       # Convert and addreses the fixed width format 
+       # of const_print_errors.py
        hex_code = f'{status["fail_reason"]:x}'
-
-       # Addreses the fixed width format of const_print_errors.py
        if len(hex_code) == 7: hex_code = "0" + str(hex_code)
        
        for key, value in PRINT_ERROR_ERRORS.items():
