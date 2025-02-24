@@ -57,7 +57,7 @@ def save_image(printer):
         subprocess.run(shell, shell=True)
         return path
     except Exception as e:
-        print("Failed to capture image from " + printer["ip"] + " Error:" + e)
+        print("Failed to capture image from ", printer["ip"], " Error:", e)
         return None
 
 
