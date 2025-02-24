@@ -133,3 +133,5 @@ printer_config.py
 .idea
 config.py
 printers.sqlite
+*.json
+ffmpeg

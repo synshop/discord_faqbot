@@ -1,7 +1,8 @@
-import json, ssl, sqlite3, hashlib, os, requests, subprocess, discord, audioop, paho.mqtt.subscribe as subscribe
+import json, ssl, sqlite3, hashlib, os, subprocess, discord, paho.mqtt.subscribe as subscribe
+
 from data import config
-from bs4 import BeautifulSoup
 from data.printer_config import PRINTERS
+from .const_print_errors import PRINT_ERROR_ERRORS
 
 db_file = "data/printers.sqlite"
 printer_table = "print_status"
@@ -55,8 +56,9 @@ def save_image(printer):
         subprocess.run(shell, shell=True)
         return path
     except Exception as e:
-        print("Failed to capture image from " + printer["ip"] + " Error:" + e)
+        print("Failed to capture image from ", printer["ip"], " Error:", e)
         return None
+
 
 def get_job_hash(status):
     # thanks https://stackoverflow.com/a/3845371
@@ -107,6 +109,7 @@ def get_status_from_db(printer_id, database):
         print("Failed to get printer status from db for ", printer_id, ". Error is:", e)
         result = False
 
+
 def save_printer_status(status, database):
     save_sql = '''
         INSERT INTO 
@@ -153,7 +156,7 @@ def get_status_from_mqtt(printer, printer_id):
             tls=tls
         )
         printer_object = json.loads(msg.payload)
-
+     
         status["name"] = printer["name"]
         status["printer_id"] = printer_id
         status["state"] = printer_object["print"]["gcode_state"]
@@ -165,6 +168,28 @@ def get_status_from_mqtt(printer, printer_id):
         print(f'Failed getting status for {printer["name"]} ({printer["ip"]}:{printer["port"]})', e)
 
     return status
+
+
+def clean_raw_json(raw=None):
+    clean = raw.replace("'",'"').replace("True",'"True"').replace("False",'"False"')
+    return json.loads(clean)
+
+
+def get_status_msg(status):
+    clean_json = clean_raw_json(status["raw_json"])
+    fail_reason = int(clean_json["print"]["fail_reason"])
+
+    if fail_reason != 0:
+        # Convert the python hex output to match the 
+        # fixed width format of const_print_errors.py
+        hex_code = f'{fail_reason:x}'
+        if len(hex_code) == 7: hex_code = "0" + str(hex_code)
+        
+        for key, value in PRINT_ERROR_ERRORS.items():
+            if hex_code.upper() == key:
+                return "\n\n**" + value + "**\n\n"
+  
+    return "\n\n"
 
 
 # thanks https://plainenglish.io/blog/send-an-embed-with-a-discord-bot-in-python
@@ -180,8 +205,9 @@ async def send_printer_status(message):
                 color=0xFF5733
             )
 
-            value = ("""`{0}`\n{1} Min Remain\n\n_{2}_""".
-                     format(status["job"], status["mins"], status["dateLocal"]))
+            value = ("""`{0}`\n{1} Min Remain{2}_{3}_""".
+                     format(status["job"], status["mins"], get_status_msg(status), status["dateLocal"]))
+                
             image_path  = "/tmp/" + status["job_hash"] + ".jpg"
             with open(image_path, 'wb') as file: # todo - avoid writing to disk
                 file.write(status["image"])
@@ -197,36 +223,13 @@ async def send_printer_status(message):
             image_path = None
             printer = ""
 
-        embed.add_field(name=printer, value=value, inline=False)
+        embed.add_field(name="", value=value, inline=False)
         await message.channel.send(embed=embed, file=file)
+
         if image_path is not None:
             os.remove(image_path)
 
     database.close()
 
 
-def get_shop_hours():
-    r = requests.get(config.SHOP_HOURS_URL)
-    soup = BeautifulSoup(r.text, 'html.parser')
-    shop_hours = soup.find(id="shophours")
 
-    hours_dict = {}
-
-    for tr in shop_hours.find_all('tr'):
-        td = tr.find_all("td")
-        hours_dict[td[0].text] = td[1].text
-
-    markdown_string = f'```\nCurrent Shop Hours (fetched from https://synshop.org/hours) \n===\n'
-
-    for k,v in hours_dict.items():
-        spaces = ""
-        s = 11 - (len(k) + 1)
-        for x in range(s):
-            spaces = spaces + " "
-
-        markdown_string += f'{k}:{spaces}{v}\n'
-
-    markdown_string += f'\n{config.SHOP_ADDRESS}\n'
-    markdown_string += f'\n{config.MEMBERSHIP_NOTICE}\n```'
-
-    return markdown_string

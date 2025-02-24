@@ -1,4 +1,7 @@
-import string, discord, archive_retrieve as ar
+import string, discord
+
+import fdmprinting.archive_retrieve as ar
+from general import shop_hours
 from data import config, discord_token
 
 intents = discord.Intents.default()
@@ -10,7 +13,6 @@ client = discord.Client(intents=intents)
 async def on_ready():
     print(f'We have logged in as the {client.user}.')
     print(f'Printer status keyword is {config.PRINTER_STATUS} and there are {len(config.PHRASES)} shop hour phrases.')
-
 
 @client.event
 async def on_message(message):
@@ -26,7 +28,7 @@ async def on_message(message):
     for phrase in config.PHRASES:
         if phrase in m:
             print(f'matched on: {phrase}')
-            await message.channel.send(ar.get_shop_hours())
+            await message.channel.send(shop_hours.get_shop_hours())
             break
 
 client.run(discord_token.TOKEN)
