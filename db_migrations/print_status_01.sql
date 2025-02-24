@@ -1,1 +1,0 @@
-alter print_status add column fail_reason integer;

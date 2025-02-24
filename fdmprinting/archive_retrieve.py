@@ -20,8 +20,7 @@ def get_database_handle():
             task_id text,
             image BLOB,
             raw_json text,
-            owner text,
-            fail_reason integer
+            owner text
         );
     """
     create_idx_printer_date = """
@@ -114,13 +113,13 @@ def get_status_from_db(printer_id, database):
 def save_printer_status(status, database):
     save_sql = '''
         INSERT INTO 
-        print_status(job_hash, date, printer, printer_id, state, job, mins, task_id, raw_json, image, fail_reason)
+        print_status(job_hash, date, printer, printer_id, state, job, mins, task_id, raw_json, image)
         VALUES
-        (?, CURRENT_TIMESTAMP, ?,?,?,?,?,?,?,?,?)
+        (?, CURRENT_TIMESTAMP, ?,?,?,?,?,?,?,?)
         ON CONFLICT(job_hash) 
         DO UPDATE SET 
         date = excluded.date, state = excluded.state, mins = excluded.mins, 
-        raw_json = excluded.raw_json, image = excluded.image, fail_reason = excluded.fail_reason;
+        raw_json = excluded.raw_json, image = excluded.image;
     '''
     path = status["image_path"]
     if path is not None and os.path.exists(path):
@@ -131,8 +130,7 @@ def save_printer_status(status, database):
 
     row = (
         get_job_hash(status), status["name"], status["printer_id"], status["state"],
-        status["job"], status["mins"], status["task_id"], status["raw_json"], image,
-        status["fail_reason"]
+        status["job"], status["mins"], status["task_id"], status["raw_json"], image
     )
     try:
         cursor = database.cursor()
@@ -166,24 +164,33 @@ def get_status_from_mqtt(printer, printer_id):
         status["mins"] = printer_object["print"]["mc_remaining_time"]
         status["task_id"] = printer_object["print"]["task_id"]
         status["raw_json"] = str(printer_object)
-        status["fail_reason"] = printer_object["print"]["fail_reason"]
     except Exception as e:
         print(f'Failed getting status for {printer["name"]} ({printer["ip"]}:{printer["port"]})', e)
 
     return status
 
 
+def clean_raw_json(raw=None):
+    clean = raw.replace("'",'"').replace("True",'"True"').replace("False",'"False"')
+    return json.loads(clean)
+
+
 def get_status_msg(status):
-    if status["fail_reason"] != 0:
-        # Convert and addresses the fixed width format 
-        # of const_print_errors.py
-        hex_code = f'{status["fail_reason"]:x}'
+
+    clean_json = clean_raw_json(status["raw_json"])
+    fail_reason = int(clean_json["print"]["fail_reason"])
+
+    if fail_reason != 0:
+
+        # Convert the python hex output to match the 
+        # fixed width format of const_print_errors.py
+        hex_code = f'{fail_reason:x}'
         if len(hex_code) == 7: hex_code = "0" + str(hex_code)
         
         for key, value in PRINT_ERROR_ERRORS.items():
             if hex_code.upper() == key:
                 return "\n\n**" + value + "**\n\n"
-    
+  
     return "\n\n"
 
 
