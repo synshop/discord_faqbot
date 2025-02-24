@@ -176,12 +176,10 @@ def clean_raw_json(raw=None):
 
 
 def get_status_msg(status):
-
     clean_json = clean_raw_json(status["raw_json"])
     fail_reason = int(clean_json["print"]["fail_reason"])
 
     if fail_reason != 0:
-
         # Convert the python hex output to match the 
         # fixed width format of const_print_errors.py
         hex_code = f'{fail_reason:x}'
