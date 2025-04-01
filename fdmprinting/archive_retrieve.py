@@ -156,27 +156,21 @@ def get_status_from_mqtt(printer, printer_id):
             tls=tls
         )
         printer_object = json.loads(msg.payload)
-     
         status["name"] = printer["name"]
         status["printer_id"] = printer_id
         status["state"] = printer_object["print"]["gcode_state"]
         status["job"] = printer_object["print"]["subtask_name"]
         status["mins"] = printer_object["print"]["mc_remaining_time"]
         status["task_id"] = printer_object["print"]["task_id"]
-        status["raw_json"] = str(printer_object)
+        status["raw_json"] = json.dumps(printer_object)
     except Exception as e:
         print(f'Failed getting status for {printer["name"]} ({printer["ip"]}:{printer["port"]})', e)
 
     return status
 
 
-def clean_raw_json(raw=None):
-    clean = raw.replace("'",'"').replace("True",'"True"').replace("False",'"False"')
-    return json.loads(clean)
-
-
 def get_status_msg(status):
-    clean_json = clean_raw_json(status["raw_json"])
+    clean_json = json.loads(status["raw_json"])
     fail_reason = int(clean_json["print"]["fail_reason"])
 
     if fail_reason != 0:
