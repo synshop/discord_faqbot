@@ -156,7 +156,7 @@ def get_status_from_mqtt(printer, printer_id):
             tls=tls
         )
         printer_object = json.loads(msg.payload)
-     
+        printer_object["print"]["subtask_name"] = printer_object["print"]["subtask_name"].replace("'","").replace('"',"")
         status["name"] = printer["name"]
         status["printer_id"] = printer_id
         status["state"] = printer_object["print"]["gcode_state"]
